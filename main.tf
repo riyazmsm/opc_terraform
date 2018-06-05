@@ -32,6 +32,13 @@ resource "opc_compute_security_rule" "ssh" {
   security_protocols = ["${opc_compute_security_protocol.ssh.name}"]
 }
 
+resource "opc_compute_security_rule" "kafka" {
+  name               = "Allow-kafka-ingress"
+  flow_direction     = "ingress"
+  acl                = "${opc_compute_acl.streamvm-acl.name}"
+  security_protocols = ["${opc_compute_security_protocol.kafka.name}"]
+}
+
 resource "opc_compute_security_rule" "egress" {
   name               = "Allow-all-egress"
   flow_direction     = "egress"
@@ -47,6 +54,11 @@ resource "opc_compute_security_protocol" "all" {
 resource "opc_compute_security_protocol" "ssh" {
   name        = "ssh"
   dst_ports   = ["22"]
+  ip_protocol = "tcp"
+}
+resource "opc_compute_security_protocol" "kafka" {
+  name        = "kafka"
+  dst_ports   = ["29092"]
   ip_protocol = "tcp"
 }
 
@@ -78,7 +90,7 @@ output "public_ip_address" {
   value = "${opc_compute_ip_address_reservation.streamvm-ip-address.ip_address}"
 }
 
-resource "null_resource" "cluster" {
+resource "null_resource" "vm" {
 count = 1
 connection {
     type        = "ssh"
@@ -93,7 +105,7 @@ provisioner "file" {
 provisioner "remote-exec" {
     inline = [
       "sudo yum -y install telnet","sudo mv /home/opc/public-yum-ol7.repo /etc/yum.repos.d/","sudo yum -y install docker-engine",
-      "sudo yum -y install curl","sudo curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose","sudo chmod +x /usr/local/bin/docker-compose",
+      "sudo yum -y install curl","sudo curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose","sudo chmod +x /usr/local/bin/docker-compose","sudo yum -y install git","sudo systemctl start docker",
     ]
   }
 }
