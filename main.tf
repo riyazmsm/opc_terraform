@@ -67,12 +67,24 @@ resource "opc_compute_vnic_set" "streamvm-vnic-set" {
   applied_acls = ["${opc_compute_acl.streamvm-acl.name}"]
 }
 
+resource "opc_compute_storage_volume" "boot-volume" {
+  size = "100"
+  name = "boot-volume"
+  bootable = true
+  image_list = "/oracle/public/OL_7.2_UEKR4_x86_64"
+  image_list_entry = 1
+}
 resource "opc_compute_instance" "streamvm-instance" {
   name       = "streamvm"
   hostname   = "streamvm"
   label      = "streamvm"
   shape      = "oc4"
-  image_list = "/oracle/public/OL_7.2_UEKR4_x86_64"
+
+ storage {
+    index = 1
+    volume = "${opc_compute_storage_volume.boot-volume.name}"
+  }
+  boot_order = [ 1 ]
 
   networking_info {
     index              = 0
